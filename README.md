@@ -85,6 +85,16 @@ The skill opens `index.html` from the session folder in the browser. The page sh
 ## Install
 
 ```
+npx skills add emilsoman/deep-think-skill -g
+```
+
+`-g` installs the skill for your user, for all projects. Without `-g`, the skill goes in the current project. Add `-a claude-code` to install it only for Claude Code. The [skills CLI](https://github.com/vercel-labs/skills) finds the agents that you have and asks which ones to use.
+
+The skill needs `bash` and `python3`.
+
+To change the skill, clone this repo and link it:
+
+```
 ln -s "$PWD" ~/.claude/skills/deep-think
 ```
 
