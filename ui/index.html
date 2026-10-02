@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep Think Progress</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<style>
+:root {
+  --bg: #f6f5f2; --panel: #ffffff; --ink: #1d1c1a; --muted: #6b6862; --line: #e4e1da;
+  --accent: #3b5bdb; --accent-soft: #e7ecfd;
+  --queued: #b9b5ac; --running: #d9822b; --done: #2f9e44; --pass: #868e96; --silent: #e03131;
+  --code: #f1efe9;
+  --shadow: 0 1px 2px rgba(0,0,0,.05), 0 2px 8px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141414; --panel: #1c1c1c; --ink: #ecebe8; --muted: #9a978f; --line: #2d2c2a;
+    --accent: #7b96ff; --accent-soft: #232a45;
+    --queued: #5c5a55; --running: #f0a050; --done: #51cf66; --pass: #8a8f96; --silent: #ff6b6b;
+    --code: #262624; --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141414; --panel: #1c1c1c; --ink: #ecebe8; --muted: #9a978f; --line: #2d2c2a;
+  --accent: #7b96ff; --accent-soft: #232a45;
+  --queued: #5c5a55; --running: #f0a050; --done: #51cf66; --pass: #8a8f96; --silent: #ff6b6b;
+  --code: #262624; --shadow: none;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 14px/1.5 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+button { font: inherit; color: inherit; }
+.wrap { max-width: 1400px; margin: 0 auto; padding: 20px 16px 40px; }
+
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-bottom: 14px; }
+header h1 { font-size: 18px; margin: 0; font-weight: 650; letter-spacing: -.01em; word-break: break-word; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px;
+  background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 12px; }
+.pill .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.live .dot { animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+.counts { display: flex; gap: 14px; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+.counts b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.updated { margin-left: auto; color: var(--muted); font-size: 12px; }
+
+.rounds { display: flex; gap: 6px; margin-bottom: 14px; }
+.rounds .step { flex: 1; height: 6px; border-radius: 3px; background: var(--line); position: relative; overflow: hidden; }
+.rounds .step i { position: absolute; inset: 0; width: 0; background: var(--accent); transition: width .4s; }
+
+details.problem { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 14px; margin-bottom: 14px; box-shadow: var(--shadow); }
+details.problem summary { cursor: pointer; font-weight: 600; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 16px; align-items: start; }
+@media (max-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.board h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+  margin: 14px 0 8px; font-weight: 600; }
+.board h2:first-child { margin-top: 0; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.card { text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 12px; cursor: pointer; box-shadow: var(--shadow); transition: border-color .15s, transform .15s; }
+.card:hover { border-color: var(--accent); }
+.card.sel { border-color: var(--accent); outline: 2px solid var(--accent-soft); }
+.card .name { font-weight: 600; font-size: 13px; line-height: 1.3; }
+.card .meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+.card .state { display: inline-flex; align-items: center; gap: 5px; }
+.card .state .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--queued); }
+.card.running .state .dot, .card.posting .state .dot { background: var(--running); animation: pulse 1.2s infinite; }
+.card.done .state .dot { background: var(--done); }
+.card.pass .state .dot { background: var(--pass); }
+.card.silent .state .dot { background: var(--silent); }
+.pips { display: flex; gap: 3px; margin-left: auto; }
+.pips span { width: 14px; height: 5px; border-radius: 2px; background: var(--line); }
+.pips .running, .pips .posting { background: var(--running); }
+.pips .done { background: var(--done); }
+.pips .pass { background: var(--pass); }
+.pips .silent { background: var(--silent); }
+.pips .queued { background: var(--queued); }
+
+.side { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow);
+  position: sticky; top: 12px; display: flex; flex-direction: column; max-height: calc(100vh - 24px); min-height: 360px; }
+@media (max-width: 960px) { .side { position: static; max-height: none; } }
+.tabs { display: flex; gap: 2px; padding: 8px 8px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.tabs button { border: 0; background: none; padding: 8px 12px; border-radius: 8px 8px 0 0; cursor: pointer;
+  color: var(--muted); font-weight: 600; font-size: 13px; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs button.on { color: var(--ink); border-bottom-color: var(--accent); }
+.tabs button:disabled { opacity: .35; cursor: default; }
+.tabs .badge { font-size: 11px; color: var(--muted); font-weight: 500; margin-left: 4px; }
+.filters { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; align-items: center; }
+.chip { border: 1px solid var(--line); background: none; border-radius: 99px; padding: 2px 10px; font-size: 12px; cursor: pointer; color: var(--muted); }
+.chip.on { background: var(--accent-soft); color: var(--accent); border-color: transparent; font-weight: 600; }
+.chip.clear { margin-left: auto; }
+.body { overflow-y: auto; padding: 12px 16px 20px; flex: 1; }
+
+.post { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.post:last-child { border-bottom: 0; }
+.post .head { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; font-size: 12px; color: var(--muted); }
+.post .head b { color: var(--ink); font-size: 13px; }
+.post .head .to { color: var(--accent); }
+.post .head .r { font-variant-numeric: tabular-nums; background: var(--code); border-radius: 4px; padding: 0 5px; }
+.post .head time { margin-left: auto; }
+.post.pass { opacity: .55; }
+.post.pass .md { font-style: italic; }
+.post.new { animation: flash 1.6s ease-out; }
+@keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
+
+.md { overflow-wrap: anywhere; }
+.md > :first-child { margin-top: 4px; }
+.md > :last-child { margin-bottom: 0; }
+.md h1, .md h2, .md h3 { line-height: 1.3; margin: 1.1em 0 .4em; }
+.md h1 { font-size: 18px; } .md h2 { font-size: 16px; } .md h3 { font-size: 14px; }
+.md p, .md ul, .md ol { margin: .4em 0; }
+.md ul, .md ol { padding-left: 1.4em; }
+.md code { background: var(--code); border-radius: 4px; padding: 0 4px; font-size: 12.5px; }
+.md pre { background: var(--code); padding: 10px; border-radius: 8px; overflow-x: auto; }
+.md pre code { padding: 0; }
+.md table { border-collapse: collapse; display: block; overflow-x: auto; font-size: 13px; margin: .6em 0; }
+.md table { overflow-wrap: normal; }
+.md th, .md td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; vertical-align: top; min-width: 5em; }
+.md td:first-child, .md th:first-child { min-width: 2.5em; }
+.md blockquote { margin: .5em 0; padding-left: 10px; border-left: 3px solid var(--line); color: var(--muted); }
+.empty { color: var(--muted); padding: 30px 0; text-align: center; }
+.toolhead { margin-bottom: 8px; }
+.toolhead .use { color: var(--muted); }
+.sep { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 18px 0 4px; font-weight: 600; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 10px 0 0; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title">Deep think</h1>
+    <span id="stage" class="pill"><span class="dot"></span><span>Waiting</span></span>
+    <div class="counts" id="counts"></div>
+    <div class="updated" id="updated">Waiting for data…</div>
+  </header>
+  <div class="rounds" id="rounds"></div>
+  <details class="problem"><summary>Problem</summary><div class="md" id="problem"></div></details>
+  <div class="grid">
+    <div>
+      <div class="board" id="board"></div>
+      <div class="legend">
+        <span><i style="background:var(--queued)"></i>Queued</span>
+        <span><i style="background:var(--running)"></i>Running</span>
+        <span><i style="background:var(--done)"></i>Posted</span>
+        <span><i style="background:var(--pass)"></i>PASS</span>
+        <span><i style="background:var(--silent)"></i>No post</span>
+      </div>
+    </div>
+    <aside class="side">
+      <div class="tabs" id="tabs"></div>
+      <div class="filters" id="filters"></div>
+      <div class="body" id="body"></div>
+    </aside>
+  </div>
+</div>
+<script>
+(() => {
+  const GROUPS = ["Decision Making", "Problem Solving", "Systems Thinking", "Communication"];
+  const STATE_LABEL = { idle: "Not started", queued: "Queued", running: "Running", posting: "Posting",
+    done: "Posted", pass: "PASS", silent: "No post" };
+  const STAGE_LABEL = { setup: "Setting up", round: "Round", converge: "Comparing solutions",
+    report: "Writing report", done: "Done" };
+  const ui = { tab: "chat", round: "all", hidePass: false, tool: null, version: null, seen: new Set(), first: true };
+  const $ = (id) => document.getElementById(id);
+  let data = null;
+
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const md = (s) => {
+    if (!s) return "";
+    if (window.marked && window.DOMPurify) return DOMPurify.sanitize(marked.parse(s, { gfm: true, breaks: true }));
+    return "<pre style='white-space:pre-wrap'>" + esc(s) + "</pre>";
+  };
+  const toolName = (slug) => (data.tools.find((t) => t.slug === slug) || {}).name || slug;
+  const when = (iso) => { const d = new Date(iso); return isNaN(d) ? iso : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }); };
+  const cur = (t) => t.states[String(data.round)] || "idle";
+
+  function render() {
+    $("title").textContent = data.session;
+    document.title = data.session + " · Deep Think";
+    const live = data.stage !== "done";
+    const stageText = data.stage === "round" ? `Round ${data.round} of ${data.maxRounds}` : STAGE_LABEL[data.stage] || data.stage;
+    $("stage").className = "pill" + (live ? " live" : "");
+    $("stage").lastElementChild.textContent = stageText;
+
+    const c = {};
+    data.tools.forEach((t) => { const s = cur(t); c[s] = (c[s] || 0) + 1; });
+    $("counts").innerHTML = ["queued", "running", "posting", "done", "pass", "silent"]
+      .filter((k) => c[k]).map((k) => `<span><b>${c[k]}</b> ${STATE_LABEL[k].toLowerCase()}</span>`).join("")
+      + `<span><b>${data.posts.length}</b> posts</span>`;
+
+    const steps = [];
+    for (let r = 1; r <= data.maxRounds; r++) {
+      let frac = 0;
+      if (r < data.round || (r === data.round && data.stage !== "round")) frac = 1;
+      else if (r === data.round) {
+        const fin = data.tools.filter((t) => ["done", "pass", "silent"].includes(t.states[String(r)])).length;
+        frac = fin / data.tools.length;
+      }
+      steps.push(`<div class="step" title="Round ${r}"><i style="width:${Math.round(frac * 100)}%"></i></div>`);
+    }
+    const tail = ["converge", "report", "done"].indexOf(data.stage);
+    steps.push(`<div class="step" title="Converge and report"><i style="width:${tail < 0 ? 0 : tail === 2 ? 100 : 50}%"></i></div>`);
+    $("rounds").innerHTML = steps.join("");
+
+    $("problem").innerHTML = md(data.problem);
+
+    $("board").innerHTML = GROUPS.concat([...new Set(data.tools.map((t) => t.group))].filter((g) => !GROUPS.includes(g)))
+      .map((g) => {
+        const ts = data.tools.filter((t) => t.group === g);
+        if (!ts.length) return "";
+        return `<h2>${esc(g || "Other")}</h2><div class="cards">` + ts.map((t) => {
+          const s = cur(t);
+          const pips = Array.from({ length: data.maxRounds }, (_, i) => `<span class="${t.states[String(i + 1)] || ""}" title="Round ${i + 1}: ${STATE_LABEL[t.states[String(i + 1)] || "idle"]}"></span>`).join("");
+          return `<button class="card ${s}${ui.tool === t.slug ? " sel" : ""}" data-tool="${t.slug}" title="${esc(t.use)}">
+            <div class="name">${esc(t.name)}</div>
+            <div class="meta"><span class="state"><span class="dot"></span>${STATE_LABEL[s]}</span>
+            <span>${t.posts} posts</span><span class="pips">${pips}</span></div></button>`;
+        }).join("") + "</div>";
+      }).join("");
+
+    renderSide();
+  }
+
+  function renderSide() {
+    const tabs = [["chat", "Chat", data.posts.length], ["tool", ui.tool ? toolName(ui.tool) : "Tool", null],
+      ["converge", "Converge", null], ["report", "Report", null]];
+    const enabled = { chat: true, tool: !!ui.tool, converge: !!data.converge, report: !!data.report };
+    if (!enabled[ui.tab]) ui.tab = "chat";
+    $("tabs").innerHTML = tabs.map(([k, label, n]) =>
+      `<button data-tab="${k}" class="${ui.tab === k ? "on" : ""}" ${enabled[k] ? "" : "disabled"}>${esc(label)}${n != null ? `<span class="badge">${n}</span>` : ""}</button>`).join("");
+
+    const body = $("body");
+    const atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 40;
+    const keep = body.scrollTop;
+
+    if (ui.tab === "chat" || ui.tab === "tool") {
+      const rounds = [...new Set(data.posts.map((p) => p.round))].sort((a, b) => a - b);
+      $("filters").style.display = "";
+      $("filters").innerHTML = [`<button class="chip ${ui.round === "all" ? "on" : ""}" data-round="all">All rounds</button>`]
+        .concat(rounds.map((r) => `<button class="chip ${ui.round === String(r) ? "on" : ""}" data-round="${r}">Round ${r}</button>`))
+        .concat([`<button class="chip ${ui.hidePass ? "on" : ""}" data-hidepass="1">Hide PASS</button>`])
+        .concat(ui.tool ? [`<button class="chip clear" data-cleartool="1">✕ ${esc(toolName(ui.tool))}</button>`] : [])
+        .join("");
+    } else {
+      $("filters").style.display = "none";
+    }
+
+    let posts = data.posts.filter((p) => (ui.round === "all" || String(p.round) === ui.round) && !(ui.hidePass && p.pass));
+    if (ui.tool) posts = posts.filter((p) => p.from === ui.tool || p.to === ui.tool);
+    const postHtml = (p, i) => {
+      const key = `${p.round}|${p.from}|${p.time}|${i}`;
+      const fresh = !ui.first && !ui.seen.has(key);
+      ui.seen.add(key);
+      return `<div class="post${p.pass ? " pass" : ""}${fresh ? " new" : ""}">
+        <div class="head"><span class="r">R${p.round}</span><b>${esc(toolName(p.from))}</b>
+        <span class="to">→ ${p.to === "all" ? "all" : esc(toolName(p.to))}</span><time>${esc(when(p.time))}</time></div>
+        <div class="md">${p.pass ? "PASS" : md(p.text)}</div></div>`;
+    };
+
+    let html = "";
+    if (ui.tab === "chat") {
+      html = posts.length ? posts.map(postHtml).join("") : `<div class="empty">No posts yet.</div>`;
+    } else if (ui.tab === "tool") {
+      const t = data.tools.find((x) => x.slug === ui.tool);
+      html = `<div class="toolhead"><div class="sep" style="margin-top:0">${esc(t.group)}</div><div class="use">${esc(t.use)}</div></div>`
+        + `<div class="sep">Result</div>`
+        + (t.result ? `<div class="md">${md(t.result)}</div>` : `<div class="empty">No result yet.</div>`)
+        + `<div class="sep">Posts from and to this agent</div>`
+        + (posts.length ? posts.map(postHtml).join("") : `<div class="empty">No posts yet.</div>`);
+    } else {
+      html = `<div class="md">${md(data[ui.tab])}</div>`;
+    }
+    body.innerHTML = html;
+    ui.first = false;
+    if (ui.tab === "chat" && (atBottom || ui.stick)) { body.scrollTop = body.scrollHeight; ui.stick = false; }
+    else body.scrollTop = keep;
+  }
+
+  document.addEventListener("click", (e) => {
+    const card = e.target.closest("[data-tool]");
+    const tab = e.target.closest("[data-tab]");
+    const chip = e.target.closest(".chip");
+    if (card) {
+      ui.tool = ui.tool === card.dataset.tool ? null : card.dataset.tool;
+      ui.tab = ui.tool ? "tool" : "chat";
+      $("body").scrollTop = 0;
+      render();
+    } else if (tab && !tab.disabled) {
+      ui.tab = tab.dataset.tab; ui.stick = ui.tab === "chat"; $("body").scrollTop = 0; renderSide();
+    } else if (chip) {
+      if (chip.dataset.round) ui.round = chip.dataset.round;
+      if (chip.dataset.hidepass) ui.hidePass = !ui.hidePass;
+      if (chip.dataset.cleartool) { ui.tool = null; ui.tab = "chat"; }
+      ui.stick = ui.tab === "chat";
+      render();
+    }
+  });
+
+  function tick() {
+    const s = document.createElement("script");
+    s.src = "data.js?t=" + Date.now();
+    s.onload = s.onerror = () => {
+      s.remove();
+      const d = window.__DEEP_THINK__;
+      if (d && d.version !== ui.version) {
+        // Show the report once, when it first appears (or at first load of a finished session).
+        if (d.report && !(data && data.report)) { ui.tab = "report"; ui.tool = null; }
+        data = d; ui.version = d.version; if (ui.first) ui.stick = true; render();
+      }
+      if (data) {
+        const age = Math.round((Date.now() - new Date(data.rendered)) / 1000);
+        $("updated").textContent = data.stage === "done" ? "Finished" : `Last change ${age < 60 ? age + " s" : Math.round(age / 60) + " min"} ago`;
+      }
+      setTimeout(tick, data && data.stage === "done" ? 10000 : 1500);
+    };
+    document.body.appendChild(s);
+  }
+  tick();
+})();
+</script>
+</body>
+</html>

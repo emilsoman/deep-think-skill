@@ -36,3 +36,7 @@ trap 'rmdir "$lock" 2>/dev/null' EXIT
 post=$(printf '## r%s · %s → %s · %s\n\n%s\n\n' \
   "$round" "$from" "$to" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$text")
 printf '%s\n\n' "$post" >> "$chat"
+rmdir "$lock" 2>/dev/null || true
+trap - EXIT
+
+python3 "$(dirname "$0")/render.py" "$(dirname "$chat")" || echo "progress page not updated" >&2

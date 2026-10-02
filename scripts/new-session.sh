@@ -6,7 +6,8 @@
 #               .claude/deep-think or .agents/deep-think (in the user's project)
 #   stdin       the framed problem statement (Markdown)
 #
-# Prints the absolute path of the new session folder.
+# Prints the absolute path of the new session folder. The folder also gets
+# index.html, a progress page that updates while the agents work.
 set -euo pipefail
 
 base=${1:?base dir required}
@@ -56,5 +57,7 @@ printf '%s\n' "$problem" > "$dir/problem.md"
   echo "---"
   echo
 } > "$dir/chatroom.md"
+
+python3 "$skill_dir/scripts/render.py" "$dir" || echo "progress page not built" >&2
 
 echo "$dir"

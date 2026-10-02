@@ -4,8 +4,6 @@ A Claude Code skill that thinks about a hard problem with many agents at the sam
 
 Each agent uses a different thinking tool from [untools](https://untools.co/). The skill uses all 25 tools for each problem. The agents talk to each other in a chatroom. The chatroom is a Markdown file. Then the skill gives one report with the solutions.
 
-> Status: first build. Not yet tested on a full run with 25 agents. See [PLAN.md](PLAN.md).
-
 ## How it works
 
 ```
@@ -57,9 +55,16 @@ If the user gives a folder for deep-think sessions (in the prompt, CLAUDE.md, or
 ├── problem.md     # The framed problem statement
 ├── tools/*.md     # The full result of each subagent
 ├── chatroom.md    # The discussion
+├── index.html     # The progress page (open it in a browser)
+├── data.js        # The data for the progress page
+├── events.log     # Progress events
 ├── converge.md    # The comparison of the solutions
 └── report.md      # The final report
 ```
+
+## Progress page
+
+The skill opens `index.html` from the session folder in the browser. The page shows each agent's state for each round, the chat as it happens, each tool's result, and at the end the comparison and the report. It needs no server. It loads `data.js` again every 2 seconds. `post.sh` and `event.sh` update `data.js`. It needs `python3`. It loads the Markdown libraries from cdnjs.
 
 ## Parts
 
@@ -73,6 +78,9 @@ If the user gives a folder for deep-think sessions (in the prompt, CLAUDE.md, or
 | `scripts/post.sh` | Add a post to `chatroom.md` with a lock. |
 | `scripts/read.sh` | Show `chatroom.md` without the posts of the current round. |
 | `scripts/status.sh` | Show the state of a round. |
+| `scripts/event.sh` | Record a progress event (round, agent start and finish, stage). |
+| `scripts/render.py` | Write `data.js` for the progress page. |
+| `ui/index.html` | The progress page template. |
 
 ## Install
 

@@ -19,6 +19,15 @@ Your prompt gives you:
 | `SESSION/chatroom.md` | Read only with `read.sh`. Add posts only with `post.sh`. |
 | `SESSION/tools/<other>.md` | Read when a post is not clear and you need the details. Never write. |
 
+## Progress events
+
+Your first command and your last command in each round:
+
+```bash
+"SKILL_DIR/scripts/event.sh" "SESSION" start ROUND TOOL    # first
+"SKILL_DIR/scripts/event.sh" "SESSION" finish ROUND TOOL   # last, after your posts
+```
+
 ## Read the chatroom
 
 ```bash

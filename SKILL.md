@@ -31,11 +31,19 @@ Select the base folder:
 PROBLEM
 ```
 
-The script prints the absolute session folder, `SESSION`. It makes `problem.md`, `tools/`, and `chatroom.md`.
+The script prints the absolute session folder, `SESSION`. It makes `problem.md`, `tools/`, `chatroom.md`, and the progress page `index.html`.
+
+Open the progress page for the user: `open "SESSION/index.html"` (macOS) or `xdg-open "SESSION/index.html"` (Linux). Tell the user the path. The page updates while the agents work.
 
 If the host does not let you or the subagents write in the project (example: a background session), make a git worktree of the project and use its base folder. Tell the user the worktree path at the end.
 
 ## 3. Round 1
+
+Before you spawn the agents of a round, record the round. The progress page then shows all agents as queued:
+
+```bash
+"SKILL_DIR/scripts/event.sh" "SESSION" round <ROUND> <MAX_ROUNDS>
+```
 
 Spawn one subagent for each tool. Start as many at the same time as the host lets you. If the host has a limit (example: 20), start the other agents when slots become free. The start order has no effect: each agent sees only the posts from the rounds before its round. Prompt for each:
 
@@ -69,6 +77,10 @@ The user can ask for a different number of rounds.
 
 ## 5. Converge
 
+```bash
+"SKILL_DIR/scripts/event.sh" "SESSION" stage converge
+```
+
 Spawn one subagent:
 
 ```
@@ -80,6 +92,10 @@ SESSION=<absolute path>
 
 ## 6. Report
 
+```bash
+"SKILL_DIR/scripts/event.sh" "SESSION" stage report
+```
+
 Read `SESSION/converge.md`. Read parts of `chatroom.md` and `tools/*.md` when you need the evidence.
 
 Write `SESSION/report.md` with Minto Pyramid (`SKILL_DIR/tools/minto-pyramid.md`):
@@ -89,4 +105,4 @@ Write `SESSION/report.md` with Minto Pyramid (`SKILL_DIR/tools/minto-pyramid.md`
 3. The first step to take, and the main risk.
 4. Open disagreements, and the data that can decide them.
 
-Show the report to the user. Give the path to `SESSION`. Do not delete the session folder.
+Then run `"SKILL_DIR/scripts/event.sh" "SESSION" stage done`. Show the report to the user. Give the path to `SESSION`. Do not delete the session folder.
