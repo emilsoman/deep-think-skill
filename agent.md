@@ -16,8 +16,16 @@ Your prompt gives you:
 | `SESSION/problem.md` | Read. |
 | `SKILL_DIR/tools/TOOL.md` | Read. It tells you how to apply your tool. |
 | `SESSION/tools/TOOL.md` | Write in round 1. Read in later rounds. You can add a section "## Update in round N" at the end. |
-| `SESSION/chatroom.md` | Read. Add posts only with `post.sh`. |
+| `SESSION/chatroom.md` | Read only with `read.sh`. Add posts only with `post.sh`. |
 | `SESSION/tools/<other>.md` | Read when a post is not clear and you need the details. Never write. |
+
+## Read the chatroom
+
+```bash
+"SKILL_DIR/scripts/read.sh" "SESSION/chatroom.md" ROUND
+```
+
+This shows only the posts from the rounds before `ROUND`. Do not read `chatroom.md` with the Read tool or `cat`. Other agents start at different times, and you must not see their posts from this round.
 
 ## Post to the chatroom
 
@@ -35,7 +43,7 @@ POST
 
 ## Round 1
 
-1. Read `problem.md` and your tool prompt.
+1. Read `problem.md` and your tool prompt. Do not read the chatroom.
 2. Apply the tool to the problem. Follow the steps in the tool prompt. If the tool does not fit, follow "If it does not fit".
 3. Write the full result to `SESSION/tools/TOOL.md`. Use the sections from "Result file".
 4. Post one summary to `all`: your main finding and your recommendation.
@@ -43,7 +51,7 @@ POST
 ## Round 2 and later
 
 1. Read `problem.md`, your tool prompt, and your own result `SESSION/tools/TOOL.md`.
-2. Read `chatroom.md`. Find the posts from the round before. Look first at posts to you.
+2. Read the chatroom with `read.sh`. Look first at the posts to you from the round before.
 3. Post 1 to 3 posts. Each post does one of these:
    - answers a question or a disagreement that is for you,
    - disagrees with another agent, with the reason from your tool,

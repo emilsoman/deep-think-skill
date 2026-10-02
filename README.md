@@ -71,6 +71,7 @@ Claude Code uses `.claude/deep-think/<problem-slug>/`. Other agents that use `.a
 | `tools/*.md` | One prompt for each of the 25 untools tools. |
 | `scripts/new-session.sh` | Make the problem folder and the chatroom. |
 | `scripts/post.sh` | Add a post to `chatroom.md` with a lock. |
+| `scripts/read.sh` | Show `chatroom.md` without the posts of the current round. |
 | `scripts/status.sh` | Show the state of a round. |
 
 ## Install

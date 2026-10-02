@@ -31,9 +31,11 @@ PROBLEM
 
 The script prints the absolute session folder, `SESSION`. It makes `problem.md`, `tools/`, and `chatroom.md`.
 
+If the host does not let you or the subagents write in the project (example: a background session), make a git worktree of the project and use its base folder. Tell the user the worktree path at the end.
+
 ## 3. Round 1
 
-Spawn one subagent for each tool, all in one message, so that they run at the same time. Prompt for each:
+Spawn one subagent for each tool. Start as many at the same time as the host lets you. If the host has a limit (example: 20), start the other agents when slots become free. The start order has no effect: each agent sees only the posts from the rounds before its round. Prompt for each:
 
 ```
 You are the <tool-slug> agent in a deep-think session.
@@ -54,7 +56,7 @@ If an agent is in `silent`, spawn it again one time.
 
 ## 4. Rounds 2 to 3
 
-For each round, spawn 25 new subagents with the same prompt and the new `ROUND`. The agents keep no memory between rounds. Their result files and the chatroom hold the state.
+For each round, spawn 25 new subagents with the same prompt and the new `ROUND`, in the same way as round 1. Start a round only after all agents of the round before finish. The agents keep no memory between rounds. Their result files and the chatroom hold the state.
 
 After each round, run `status.sh` for that round. Stop the discussion when one of these is true:
 

@@ -102,6 +102,7 @@ M2 gives a useful skill before the chat rounds are ready. M3 shows if the chat m
 | `tools/*.md` | One prompt for each of the 25 tools. |
 | `scripts/new-session.sh` | Make the problem folder, `problem.md`, and `chatroom.md`. |
 | `scripts/post.sh` | Add a post to `chatroom.md` with a lock. |
+| `scripts/read.sh` | Show `chatroom.md` without the posts of the current round. |
 | `scripts/status.sh` | Count the posts and `PASS` posts in a round. Show the agents that did not post. |
 
 ## Open questions
@@ -111,6 +112,9 @@ M2 gives a useful skill before the chat rounds are ready. M3 shows if the chat m
 - Must `.claude/deep-think/` go in `.gitignore`?
 
 ## Risks
+
+- **Limit on parallel agents.** A host can run only some agents at the same time (example: 20). The main agent starts the other agents when slots become free. Agents that start later can see more posts, so each agent reads the chatroom with `read.sh`. It shows only the posts from the rounds before.
+- **Writes blocked.** In a background session, the host can block writes in the project checkout. Then the skill uses a git worktree of the project.
 
 - **Cost.** 25 agents × 3 rounds uses many tokens. Keep posts short (maximum 10 lines). Agents with nothing new post `PASS`. Use a smaller model for the subagents if the result stays good.
 - **Long chatroom.** 25 agents × 3 rounds = up to 75 posts. In round 3, a subagent can read only the posts that reply to it, and the summaries from round 1.
