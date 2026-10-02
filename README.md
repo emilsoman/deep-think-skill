@@ -91,4 +91,3 @@ ln -s "$PWD" ~/.claude/skills/deep-think
 ## Links
 
 - Thinking tools: https://untools.co/
-- Vault note: `~/Personal/obsidian/projects/deep-think-skill.md`
