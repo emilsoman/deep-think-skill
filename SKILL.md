@@ -18,10 +18,12 @@ Write the framed problem: the problem statement, the goal, the known facts, and 
 
 ## 2. Make the session
 
-Select the base folder in the user's current project:
+Select the base folder:
 
-- Claude Code: `.claude/deep-think`
-- Other agents that use the `.agents/` folder: `.agents/deep-think`
+1. If the user gives a folder for deep-think sessions (in the prompt, in CLAUDE.md, or in memory), use it.
+2. If not, use a folder in the user's current project:
+   - Claude Code: `.claude/deep-think`
+   - Other agents that use the `.agents/` folder: `.agents/deep-think`
 
 ```bash
 "SKILL_DIR/scripts/new-session.sh" <base> "<short title, max 6 words>" <<'PROBLEM'

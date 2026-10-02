@@ -50,7 +50,7 @@ Each agent uses a different thinking tool from [untools](https://untools.co/). T
 
 ## Problem folder
 
-Claude Code uses `.claude/deep-think/<problem-slug>/`. Other agents that use `.agents/` use `.agents/deep-think/<problem-slug>/`.
+If the user gives a folder for deep-think sessions (in the prompt, CLAUDE.md, or memory), the skill uses `<that folder>/<problem-slug>/`. If not, Claude Code uses `.claude/deep-think/<problem-slug>/`, and other agents that use `.agents/` use `.agents/deep-think/<problem-slug>/`.
 
 ```
 <problem-slug>/

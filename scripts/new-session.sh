@@ -2,7 +2,8 @@
 # Make a deep-think session folder and start its chatroom.
 #
 # Usage: new-session.sh <base-dir> "<short title>" < problem.md
-#   <base-dir>  .claude/deep-think or .agents/deep-think (in the user's project)
+#   <base-dir>  the user's deep-think folder if one is given, else
+#               .claude/deep-think or .agents/deep-think (in the user's project)
 #   stdin       the framed problem statement (Markdown)
 #
 # Prints the absolute path of the new session folder.
